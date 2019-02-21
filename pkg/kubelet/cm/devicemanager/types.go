@@ -20,7 +20,9 @@ import (
 	"time"
 
 	"k8s.io/api/core/v1"
+	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 	podresourcesapi "k8s.io/kubernetes/pkg/kubelet/apis/podresources/v1alpha1"
+	"k8s.io/kubernetes/pkg/kubelet/cm/topologymanager"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
@@ -51,6 +53,11 @@ type Manager interface {
 	// for the found one. An empty struct is returned in case no cached state is found.
 	GetDeviceRunContainerOptions(pod *v1.Pod, container *v1.Container) (*DeviceRunContainerOptions, error)
 
+	// Devices is the map of devices that have registered themselves
+	// against the manager.
+	// The map key is the ResourceName of the device plugins.
+	Devices() map[string][]pluginapi.Device
+
 	// GetCapacity returns the amount of available device plugin resource capacity, resource allocatable
 	// and inactive device plugin resources previously registered on the node.
 	GetCapacity() (v1.ResourceList, v1.ResourceList, []string)
@@ -58,6 +65,10 @@ type Manager interface {
 
 	// GetDevices returns information about the devices assigned to pods and containers
 	GetDevices(podUID, containerName string) []*podresourcesapi.ContainerDevices
+
+	// TopologyManager HintProvider provider indicates the Device Manager implements the Topology Manager Interface
+	// and is consulted to make Topology aware resource alignments
+	GetTopologyHints(pod v1.Pod, container v1.Container) topologymanager.TopologyHints
 }
 
 // DeviceRunContainerOptions contains the combined container runtime settings to consume its allocated devices.
